@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"html/template"
 	"log"
+	"net/http"
 	"os"
 	"sync"
 	"time"
@@ -204,8 +205,8 @@ func main() {
 
 			// 处理预检请求
 			if c.Request.Method == "OPTIONS" {
-				//c.AbortWithStatus(http.StatusOK)
-				//return
+				c.AbortWithStatus(http.StatusOK)
+				return
 			}
 		}
 
@@ -229,6 +230,7 @@ func main() {
 		} else if "OPTIONS" == context.Request.Method {
 			context.Writer.Write([]byte("ok"))
 			context.Writer.WriteHeader(200)
+			context.Abort()
 		} else {
 			serveGet(hub, context)
 		}
