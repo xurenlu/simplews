@@ -184,6 +184,33 @@ func main() {
 	go hub.ticker()
 
 	router := gin.New()
+	//router.Use(cors.New(cors.Config{
+	//	AllowOrigins:     []string{"https://sycm.taobao.com", "http://some.im"},        // 设置允许访问的域名
+	//	AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}, // 设置允许的方法
+	//	AllowHeaders:     []string{"Origin", "Content-Type"},                           // 设置允许的头部
+	//	ExposeHeaders:    []string{"Content-Length"},                                   // 设置公开的头部
+	//	AllowCredentials: true,                                                         // 是否允许包含认证信息
+	//	MaxAge:           12 * time.Hour,                                               // 预检请求的过期时间
+	//}))
+	router.Use(func(c *gin.Context) {
+		origin := c.GetHeader("Origin")
+
+		// 在实际应用中应该有更严格的 Origin 检查
+		if origin != "" {
+			c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
+			c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			c.Writer.Header().Set("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization")
+			c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+
+			// 处理预检请求
+			if c.Request.Method == "OPTIONS" {
+				//c.AbortWithStatus(http.StatusOK)
+				//return
+			}
+		}
+
+		c.Next()
+	})
 	router.SetFuncMap(template.FuncMap{
 		"safe": func(str string) template.HTML {
 			return template.HTML(str)
@@ -199,6 +226,9 @@ func main() {
 	router.NoRoute(func(context *gin.Context) {
 		if "POST" == context.Request.Method {
 			servePost(hub, context)
+		} else if "OPTIONS" == context.Request.Method {
+			context.Writer.Write([]byte("ok"))
+			context.Writer.WriteHeader(200)
 		} else {
 			serveGet(hub, context)
 		}
